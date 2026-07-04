@@ -1,0 +1,16 @@
+﻿let  
+ Source = Csv.Document(File.Contents("C:\Users\PARTH\DataForge_EDA_Sprint_2026_2026CS011\02_excel\p2 excel.csv"),[Delimiter=",", Columns=18, Encoding=65001, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"Row ID", Int64.Type}, {"Order ID", type text}, {"Order Date", type date}, {"Ship Date", type date}, {"Ship Mode", type text}, {"Customer ID", type text}, {"Customer Name", type text}, {"Segment", type text}, {"Country", type text}, {"City", type text}, {"State", type text}, {"Postal Code", Int64.Type}, {"Region", type text}, {"Product ID", type text}, {"Category", type text}, {"Sub-Category", type text}, {"Product Name", type text}, {"Sales", type number}}),
+    #"Removed Blank Rows" = Table.SelectRows(#"Changed Type", each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))),
+    #"Removed Duplicates" = Table.Distinct(#"Removed Blank Rows", {"Row ID"}),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Removed Duplicates",{{"Sales", type number}}),
+    #"Trimmed Text" = Table.TransformColumns(#"Changed Type1",{{"Customer Name", Text.Trim, type text}}),
+    #"Changed Type2" = Table.TransformColumnTypes(#"Trimmed Text",{{"Postal Code", Int64.Type}, {"Sales", type number}, {"Order Date", type date}}),
+    #"Removed Errors" = Table.RemoveRowsWithErrors(#"Changed Type2", {"Ship Date"}),
+    #"Removed Errors1" = Table.RemoveRowsWithErrors(#"Removed Errors", {"Order Date"}),
+    #"Added Conditional Column" = Table.AddColumn(#"Removed Errors1", "Order Size", each if [Sales] > 1000 then "high" else if [Sales] > 500 then "medium" else "low"),
+    #"Inserted Year" = Table.AddColumn(#"Added Conditional Column", "Year", each Date.Year([Order Date]), Int64.Type),
+    #"Inserted Month Name" = Table.AddColumn(#"Inserted Year", "Month Name", each Date.MonthName([Order Date]), type text)
+in
+    #"Inserted Month Name"
