@@ -1,2 +1,5 @@
-﻿flask
-
+﻿streamlit
+pandas
+numpy
+matplotlib
+openpyxl
